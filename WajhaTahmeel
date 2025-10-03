@@ -1,0 +1,464 @@
+-- Gui to Lua
+-- Version: 24.1 | The Fixed Settings Button Edition
+
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+
+local LoadingConfig = {
+    Duration = 6,
+    FadeOutTime = 1.2,
+    BarColor = Color3.fromRGB(138, 43, 226),
+    ParticleCount = 80,
+    ParticleSizeMax = 8,
+    ParticleSpeed = 0.003,
+    Version = "v24.1 | Fixed Settings"
+}
+
+local LoadingElements = {
+    "جاري تهيئة الواجهة...",
+    "التحقق من التحديثات...",
+    "تحميل سكربتات التخريب...",
+    "تجهيز قائمة السيارات...",
+    "على وشك الانتهاء..."
+}
+
+local AnimationConnections = {}
+local Particles = {}
+
+local function CreateParticleSystem(parent)
+    local particleFrame = Instance.new("Frame", parent)
+    particleFrame.Name = "ParticleFrame"
+    particleFrame.BackgroundTransparency = 1
+    particleFrame.Size = UDim2.new(1, 0, 1, 0)
+    particleFrame.ClipsDescendants = true
+
+    for i = 1, LoadingConfig.ParticleCount do
+        local particle = Instance.new("Frame")
+        particle.Parent = particleFrame
+        particle.BackgroundColor3 = LoadingConfig.BarColor
+        particle.BorderSizePixel = 0
+        local size = math.random(2, LoadingConfig.ParticleSizeMax)
+        particle.Size = UDim2.new(0, size, 0, size)
+        particle.Position = UDim2.new(math.random(), 0, math.random(), 0)
+        particle.Transparency = math.random(4, 8) / 10
+        local corner = Instance.new("UICorner", particle)
+        corner.CornerRadius = UDim.new(1, 0)
+        
+        table.insert(Particles, particle)
+
+        local connection = RunService.Heartbeat:Connect(function()
+            if particle.Parent and particle.Visible then
+                particle.Position = particle.Position + UDim2.new(0, 0, LoadingConfig.ParticleSpeed * (size / LoadingConfig.ParticleSizeMax), 0)
+                if particle.Position.Y.Scale > 1.1 then
+                    particle.Position = UDim2.new(math.random(), 0, -0.1, 0)
+                end
+            end
+        end)
+        table.insert(AnimationConnections, connection)
+    end
+end
+
+local function CreateLoadingScreen()
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "YuraHubLoadingScreen"
+    ScreenGui.Parent = PlayerGui
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    ScreenGui.IgnoreGuiInset = true
+
+    local Background = Instance.new("Frame", ScreenGui)
+    Background.Name = "Background"
+    Background.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    Background.BorderSizePixel = 0
+    Background.Size = UDim2.new(1, 0, 1, 0)
+    Background.BackgroundTransparency = 1
+
+    local particleContainer = CreateParticleSystem(Background)
+
+    local MainFrame = Instance.new("Frame", Background)
+    MainFrame.Name = "MainFrame"
+    MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+    MainFrame.Size = UDim2.new(0, 0, 0, 0)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
+    MainFrame.BackgroundTransparency = 0.1
+    MainFrame.BorderSizePixel = 0
+    MainFrame.ClipsDescendants = true
+
+    local UICorner_MainFrame = Instance.new("UICorner", MainFrame)
+    UICorner_MainFrame.CornerRadius = UDim.new(0, 12)
+
+    local UIStroke_MainFrame = Instance.new("UIStroke", MainFrame)
+    UIStroke_MainFrame.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    UIStroke_MainFrame.Color = Color3.fromRGB(138, 43, 226)
+    UIStroke_MainFrame.Thickness = 1
+    UIStroke_MainFrame.Transparency = 0.3
+
+    local Title = Instance.new("TextLabel", MainFrame)
+    Title.Name = "Title"
+    Title.AnchorPoint = Vector2.new(0.5, 0.5)
+    Title.Position = UDim2.new(0.5, 0, 0.2, 0)
+    Title.Size = UDim2.new(0.9, 0, 0, 40)
+    Title.BackgroundTransparency = 1
+    Title.Font = Enum.Font.GothamBlack
+    Title.Text = "YURA HUB"
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.TextSize = 42.000
+    Title.TextXAlignment = Enum.TextXAlignment.Center
+    Title.TextTransparency = 1
+
+    local UIGradient_Title = Instance.new("UIGradient", Title)
+    UIGradient_Title.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(220, 180, 255)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(150, 70, 255))}
+    UIGradient_Title.Rotation = 90
+
+    local WelcomeLabel = Instance.new("TextLabel", MainFrame)
+    WelcomeLabel.Name = "WelcomeLabel"
+    WelcomeLabel.AnchorPoint = Vector2.new(0.5, 0)
+    WelcomeLabel.Position = UDim2.new(0.5, 0, 0.35, 0)
+    WelcomeLabel.Size = UDim2.new(0.9, 0, 0, 20)
+    WelcomeLabel.BackgroundTransparency = 1
+    WelcomeLabel.Font = Enum.Font.Gotham
+    WelcomeLabel.Text = "YURA HUB يرحب بك, " .. Player.Name
+    WelcomeLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+    WelcomeLabel.TextSize = 16.000
+    WelcomeLabel.TextTransparency = 1
+
+    local LoadingFrame = Instance.new("Frame", MainFrame)
+    LoadingFrame.Name = "LoadingFrame"
+    LoadingFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    LoadingFrame.Position = UDim2.new(0.5, 0, 0.55, 0)
+    LoadingFrame.Size = UDim2.new(0.9, 0, 0, 12)
+    LoadingFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+    LoadingFrame.BorderSizePixel = 0
+    LoadingFrame.BackgroundTransparency = 1
+
+    local UICorner_LoadingFrame = Instance.new("UICorner", LoadingFrame)
+    UICorner_LoadingFrame.CornerRadius = UDim.new(1, 0)
+
+    local LoadingBar = Instance.new("Frame", LoadingFrame)
+    LoadingBar.Name = "LoadingBar"
+    LoadingBar.BackgroundColor3 = LoadingConfig.BarColor
+    LoadingBar.BorderSizePixel = 0
+    LoadingBar.Size = UDim2.new(0, 0, 1, 0)
+    LoadingBar.ClipsDescendants = true
+
+    local UICorner_LoadingBar = Instance.new("UICorner", LoadingBar)
+    UICorner_LoadingBar.CornerRadius = UDim.new(1, 0)
+
+    local UIGradient_LoadingBar = Instance.new("UIGradient", LoadingBar)
+    UIGradient_LoadingBar.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(180, 100, 255)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(110, 30, 200))}
+
+    local ShineEffect = Instance.new("Frame", LoadingBar)
+    ShineEffect.Name = "ShineEffect"
+    ShineEffect.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    ShineEffect.BackgroundTransparency = 0.8
+    ShineEffect.BorderSizePixel = 0
+    ShineEffect.Size = UDim2.new(0.2, 0, 1, 0)
+    ShineEffect.Position = UDim2.new(-0.2, 0, 0, 0)
+    ShineEffect.Rotation = 20
+
+    local Status = Instance.new("TextLabel", MainFrame)
+    Status.Name = "Status"
+    Status.AnchorPoint = Vector2.new(0.5, 0)
+    Status.Position = UDim2.new(0.5, 0, 0.68, 0)
+    Status.Size = UDim2.new(0.9, 0, 0, 20)
+    Status.BackgroundTransparency = 1
+    Status.Font = Enum.Font.Gotham
+    Status.Text = "جاري تحميل الموارد..."
+    Status.TextColor3 = Color3.fromRGB(200, 200, 200)
+    Status.TextSize = 18.000
+    Status.TextTransparency = 1
+
+    local Percentage = Instance.new("TextLabel", MainFrame)
+    Percentage.Name = "Percentage"
+    Percentage.AnchorPoint = Vector2.new(0.5, 0)
+    Percentage.Position = UDim2.new(0.5, 0, 0.8, 0)
+    Percentage.Size = UDim2.new(0.9, 0, 0, 20)
+    Percentage.BackgroundTransparency = 1
+    Percentage.Font = Enum.Font.GothamBold
+    Percentage.Text = "0%"
+    Percentage.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Percentage.TextSize = 16.000
+    Percentage.TextTransparency = 1
+    
+    local VersionLabel = Instance.new("TextLabel", MainFrame)
+    VersionLabel.Name = "VersionLabel"
+    VersionLabel.AnchorPoint = Vector2.new(1, 1)
+    VersionLabel.Position = UDim2.new(0.98, 0, 0.98, 0)
+    VersionLabel.Size = UDim2.new(0.5, 0, 0, 15)
+    VersionLabel.BackgroundTransparency = 1
+    VersionLabel.Font = Enum.Font.Code
+    VersionLabel.Text = LoadingConfig.Version
+    VersionLabel.TextColor3 = Color3.fromRGB(100, 100, 100)
+    VersionLabel.TextSize = 12.000
+    VersionLabel.TextXAlignment = Enum.TextXAlignment.Right
+    VersionLabel.TextTransparency = 1
+
+    local EasterEggButton = Instance.new("TextButton", Background)
+    EasterEggButton.Name = "EasterEggButton"
+    EasterEggButton.AnchorPoint = Vector2.new(0.5, 1)
+    EasterEggButton.Position = UDim2.new(0.5, 30, 1, -20)
+    EasterEggButton.Size = UDim2.new(0, 50, 0, 50)
+    EasterEggButton.Text = "Y"
+    EasterEggButton.Font = Enum.Font.SourceSansBold
+    EasterEggButton.TextSize = 30
+    EasterEggButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    EasterEggButton.BackgroundTransparency = 1 -- يبدأ شفاف
+    EasterEggButton.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
+    local cornerY = Instance.new("UICorner", EasterEggButton); cornerY.CornerRadius = UDim.new(1,0)
+
+    local SettingsButton = Instance.new("TextButton", Background)
+    SettingsButton.Name = "SettingsButton"
+    SettingsButton.AnchorPoint = Vector2.new(0.5, 1)
+    SettingsButton.Position = UDim2.new(0.5, -30, 1, -20)
+    SettingsButton.Size = UDim2.new(0, 50, 0, 50)
+    SettingsButton.Text = "S"
+    SettingsButton.Font = Enum.Font.SourceSansBold
+    SettingsButton.TextSize = 30
+    SettingsButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    SettingsButton.BackgroundTransparency = 1 -- يبدأ شفاف
+    SettingsButton.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
+    local cornerS = Instance.new("UICorner", SettingsButton); cornerS.CornerRadius = UDim.new(1,0)
+
+    local SettingsPanel = Instance.new("Frame", Background)
+    SettingsPanel.Name = "SettingsPanel"
+    SettingsPanel.AnchorPoint = Vector2.new(0.5, 0.5)
+    SettingsPanel.Position = UDim2.new(0.5, 0, 0.5, 0)
+    SettingsPanel.Size = UDim2.new(0, 200, 0, 240)
+    SettingsPanel.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+    SettingsPanel.Visible = false
+    local corner_settings = Instance.new("UICorner", SettingsPanel); corner_settings.CornerRadius = UDim.new(0,12)
+    local stroke_settings = Instance.new("UIStroke", SettingsPanel); stroke_settings.Color = Color3.fromRGB(138, 43, 226); stroke_settings.Thickness = 1.5;
+
+    local settingsLayout = Instance.new("UIListLayout", SettingsPanel)
+    settingsLayout.Padding = UDim.new(0, 10)
+    settingsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    settingsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+    local settingsPadding = Instance.new("UIPadding", SettingsPanel)
+    settingsPadding.PaddingTop = UDim.new(0, 10)
+    settingsPadding.PaddingLeft = UDim.new(0, 10)
+    settingsPadding.PaddingRight = UDim.new(0, 10)
+
+    local themeLabel = Instance.new("TextLabel", SettingsPanel); themeLabel.Text = "لون الواجهة"; themeLabel.BackgroundTransparency=1; themeLabel.TextColor3=Color3.new(1,1,1); themeLabel.Size=UDim2.new(1,0,0,20);
+    local purpleButton = Instance.new("TextButton", SettingsPanel); purpleButton.Text = "بنفسجي"; purpleButton.BackgroundColor3=Color3.fromRGB(138, 43, 226); purpleButton.Size=UDim2.new(1,0,0,25);
+    local redButton = Instance.new("TextButton", SettingsPanel); redButton.Text = "أحمر"; redButton.BackgroundColor3=Color3.fromRGB(200, 0, 0); redButton.Size=UDim2.new(1,0,0,25);
+    local blueButton = Instance.new("TextButton", SettingsPanel); blueButton.Text = "أزرق"; blueButton.BackgroundColor3=Color3.fromRGB(0, 100, 255); blueButton.Size=UDim2.new(1,0,0,25);
+    
+    local particlesLabel = Instance.new("TextLabel", SettingsPanel); particlesLabel.Text = "النقاط الخلفية"; particlesLabel.BackgroundTransparency=1; particlesLabel.TextColor3=Color3.new(1,1,1); particlesLabel.Size=UDim2.new(1,0,0,20);
+    local particlesToggle = Instance.new("TextButton", SettingsPanel); particlesToggle.Text = "تشغيل"; particlesToggle.BackgroundColor3=Color3.fromRGB(0, 150, 0); particlesToggle.Size=UDim2.new(1,0,0,25);
+    
+    local speedLabel = Instance.new("TextLabel", SettingsPanel); speedLabel.Text = "سرعة التحميل"; speedLabel.BackgroundTransparency=1; speedLabel.TextColor3=Color3.new(1,1,1); speedLabel.Size=UDim2.new(1,0,0,20);
+    local speedSlider = Instance.new("Frame", SettingsPanel); speedSlider.Size=UDim2.new(1,0,0,10); speedSlider.BackgroundColor3=Color3.fromRGB(50,50,50);
+    local sliderHandle = Instance.new("Frame", speedSlider); sliderHandle.Size=UDim2.new(0,10,0,20); sliderHandle.Position=UDim2.new(0.5, -5, 0.5, -10); sliderHandle.BackgroundColor3=Color3.new(1,1,1);
+
+    return ScreenGui, LoadingBar, Percentage, Status, MainFrame, ShineEffect, Title, LoadingFrame, WelcomeLabel, EasterEggButton, VersionLabel, SettingsButton, SettingsPanel, {purpleButton, redButton, blueButton}, particlesToggle, speedSlider, sliderHandle
+
+end
+
+local function StartLoadingSequence()
+    local screenGui, progressBar, percentageLabel, statusLabel, mainFrame, shineEffect, title, loadingFrame, welcomeLabel, easterEggButton, versionLabel, settingsButton, settingsPanel, themeButtons, particlesToggle, speedSlider, sliderHandle = CreateLoadingScreen()
+    
+    local powerUpSound = Instance.new("Sound", screenGui); powerUpSound.SoundId = "rbxassetid://136923477"; powerUpSound.Volume = 0.4;
+    local successSound = Instance.new("Sound", screenGui); successSound.SoundId = "rbxassetid://102221239"; successSound.Volume = 0.6;
+    local whooshSound = Instance.new("Sound", screenGui); whooshSound.SoundId = "rbxassetid://162334996"; whooshSound.Volume = 0.7;
+    local clickSound = Instance.new("Sound", screenGui); clickSound.SoundId = "rbxassetid://6333835654"; clickSound.Volume = 0.5;
+
+    local settingsOpen = false
+    settingsButton.MouseButton1Click:Connect(function()
+        clickSound:Play()
+        settingsOpen = not settingsOpen
+        SettingsPanel.Visible = settingsOpen
+        if settingsOpen then
+            SettingsPanel.Size = UDim2.new(0,0,0,0)
+            TweenService:Create(SettingsPanel, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 200, 0, 240)}):Play()
+        end
+    end)
+
+    local function applyTheme(color)
+        LoadingConfig.BarColor = color
+        mainFrame.UIStroke.Color = color
+        settingsPanel.UIStroke.Color = color
+        progressBar.BackgroundColor3 = color
+        progressBar.UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromHSV(color:ToHSV() + 0.1, 1, 1)), ColorSequenceKeypoint.new(1, color)}
+        for _, p in ipairs(Particles) do p.BackgroundColor3 = color end
+    end
+
+    themeButtons[1].MouseButton1Click:Connect(function() applyTheme(Color3.fromRGB(138, 43, 226)) end)
+    themeButtons[2].MouseButton1Click:Connect(function() applyTheme(Color3.fromRGB(200, 0, 0)) end)
+    themeButtons[3].MouseButton1Click:Connect(function() applyTheme(Color3.fromRGB(0, 100, 255)) end)
+
+    local particlesOn = true
+    particlesToggle.MouseButton1Click:Connect(function()
+        particlesOn = not particlesOn
+        screenGui.Background.ParticleFrame.Visible = particlesOn
+        particlesToggle.Text = particlesOn and "تشغيل" or "إيقاف"
+        particlesToggle.BackgroundColor3 = particlesOn and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0)
+    end)
+    
+    local isDraggingSlider = false
+    sliderHandle.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then isDraggingSlider = true end end)
+    sliderHandle.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then isDraggingSlider = false end end)
+    
+    RunService.Heartbeat:Connect(function()
+        if isDraggingSlider then
+            local mouseX = Player:GetMouse().X
+            local sliderX = speedSlider.AbsolutePosition.X
+            local sliderWidth = speedSlider.AbsoluteSize.X
+            local handlePos = math.clamp((mouseX - sliderX) / sliderWidth, 0, 1)
+            sliderHandle.Position = UDim2.new(handlePos, -5, 0.5, -10)
+            LoadingConfig.Duration = 2 + (8 * (1 - handlePos))
+        end
+    end)
+
+    local rgbMode = 0
+    local rgbConnection = nil
+
+    local function setRGBMode(color)
+        mainFrame.UIStroke.Color = color
+        title.UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, color), ColorSequenceKeypoint.new(1, Color3.new(1,1,1))}
+        progressBar.BackgroundColor3 = color
+        progressBar.UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromHSV(color:ToHSV() + 0.1, 1, 1)), ColorSequenceKeypoint.new(1, color)}
+        for _, p in ipairs(Particles) do p.BackgroundColor3 = color end
+    end
+
+    local function resetColors()
+        applyTheme(LoadingConfig.BarColor)
+    end
+
+    easterEggButton.MouseButton1Click:Connect(function()
+        clickSound:Play()
+        rgbMode = (rgbMode + 1) % 4
+        
+        if rgbConnection then rgbConnection:Disconnect() end
+
+        if rgbMode == 1 then
+            rgbConnection = RunService.Heartbeat:Connect(function()
+                local hue = tick() % 5 / 5
+                local color = Color3.fromHSV(hue, 1, 1)
+                setRGBMode(color)
+                easterEggButton.BackgroundColor3 = color
+            end)
+        elseif rgbMode == 2 then
+            rgbConnection = RunService.Heartbeat:Connect(function()
+                local pulse = (math.sin(tick() * 2) + 1) / 2
+                local color = Color3.new(pulse, 0, 1 - pulse)
+                setRGBMode(color)
+                easterEggButton.BackgroundColor3 = color
+            end)
+        elseif rgbMode == 3 then
+            rgbConnection = RunService.Heartbeat:Connect(function()
+                local color = (tick() * 5 % 2 < 1) and Color3.new(1,0,0) or Color3.new(0,0,1)
+                setRGBMode(color)
+                easterEggButton.BackgroundColor3 = color
+            end)
+        else
+            resetColors()
+            easterEggButton.BackgroundColor3 = LoadingConfig.BarColor
+        end
+        if rgbConnection then table.insert(AnimationConnections, rgbConnection) end
+    end)
+
+    TweenService:Create(screenGui.Background, TweenInfo.new(0.5), {BackgroundTransparency = 0}):Play()
+    powerUpSound:Play()
+
+    local entranceTween = TweenService:Create(mainFrame, TweenInfo.new(0.8, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {Size = UDim2.new(0, 480, 0, 220)})
+    entranceTween:Play()
+    entranceTween.Completed:Connect(function()
+        mainFrame.ClipsDescendants = false
+        TweenService:Create(title, TweenInfo.new(0.4), {TextTransparency = 0}):Play()
+        TweenService:Create(welcomeLabel, TweenInfo.new(0.4), {TextTransparency = 0}):Play()
+        TweenService:Create(loadingFrame, TweenInfo.new(0.4), {BackgroundTransparency = 0}):Play()
+        TweenService:Create(statusLabel, TweenInfo.new(0.4), {TextTransparency = 0}):Play()
+        TweenService:Create(percentageLabel, TweenInfo.new(0.4), {TextTransparency = 0}):Play()
+        TweenService:Create(versionLabel, TweenInfo.new(0.4), {TextTransparency = 0}):Play()
+        TweenService:Create(settingsButton, TweenInfo.new(0.4), {BackgroundTransparency = 0.8}):Play()
+        TweenService:Create(easterEggButton, TweenInfo.new(0.4), {BackgroundTransparency = 0.8}):Play()
+    end)
+
+    local pulseTween = TweenService:Create(mainFrame, TweenInfo.new(2.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {Size = UDim2.new(0, 485, 0, 225)})
+    local shineTween = TweenService:Create(shineEffect, TweenInfo.new(1.5, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1), {Position = UDim2.new(1, 0, 0, 0)})
+    
+    wait(1)
+    pulseTween:Play()
+    shineTween:Play()
+    table.insert(AnimationConnections, pulseTween)
+    table.insert(AnimationConnections, shineTween)
+
+    local startTime = tick()
+    local currentElementIndex = 1
+    local lastElementTime = startTime
+    
+    local updateConnection
+    updateConnection = RunService.Heartbeat:Connect(function()
+        local elapsed = tick() - startTime
+        local progress = math.min(elapsed / LoadingConfig.Duration, 1)
+        local percentage = math.floor(progress * 100)
+        
+        progressBar.Size = UDim2.new(progress, 0, 1, 0)
+        percentageLabel.Text = percentage .. "%"
+        
+        local elementTime = LoadingConfig.Duration / #LoadingElements
+        if tick() - lastElementTime >= elementTime and currentElementIndex <= #LoadingElements then
+            statusLabel.Text = LoadingElements[currentElementIndex]
+            currentElementIndex = currentElementIndex + 1
+            lastElementTime = tick()
+        end
+        
+        if progress >= 1 then
+            updateConnection:Disconnect()
+            
+            successSound:Play()
+            local cam = workspace.CurrentCamera
+            for i = 1, 5 do
+                cam.CFrame = cam.CFrame * CFrame.Angles(0, 0, math.rad(math.random(-1, 1)))
+                wait(0.02)
+            end
+            cam.CFrame = CFrame.new(cam.CFrame.Position) * CFrame.Angles(0,0,0)
+
+            wait(0.8)
+            
+            for _, connection in pairs(AnimationConnections) do
+                if typeof(connection) == "RBXScriptConnection" then
+                    connection:Disconnect()
+                end
+                if typeof(connection) == "Tween" then
+                    connection:Cancel()
+                end
+            end
+            
+            whooshSound:Play()
+            
+            mainFrame.ClipsDescendants = true
+            TweenService:Create(title, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+            TweenService:Create(welcomeLabel, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+            TweenService:Create(loadingFrame, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+            TweenService:Create(statusLabel, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+            TweenService:Create(percentageLabel, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+            TweenService:Create(versionLabel, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+            TweenService:Create(settingsButton, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+            TweenService:Create(easterEggButton, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+            
+            wait(0.3)
+
+            local exitTween = TweenService:Create(mainFrame, TweenInfo.new(0.8, Enum.EasingStyle.Elastic, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 0)})
+            local backgroundFade = TweenService:Create(screenGui.Background, TweenInfo.new(LoadingConfig.FadeOutTime), {BackgroundTransparency = 1})
+            
+            exitTween:Play()
+            backgroundFade:Play()
+            
+            exitTween.Completed:Connect(function()
+                screenGui:Destroy()
+            end)
+        end
+    end)
+end
+
+StartLoadingSequence()
+
+wait(LoadingConfig.Duration + LoadingConfig.FadeOutTime)
